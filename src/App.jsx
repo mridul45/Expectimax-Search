@@ -1,17 +1,18 @@
+// src/App.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { chooseBestMoveExpectimax } from "./utils/companion";
 import { valueClasses } from "./utils/tailwind";
 import {
-    boardToMatrix,
-    cloneBoard,
-    emptyBoard,
-    hasMoves,
-    moveDown,
-    moveLeft,
-    moveRight,
-    moveUp,
-    SIZE,
-    spawnTile
+  boardToMatrix,
+  cloneBoard,
+  emptyBoard,
+  hasMoves,
+  moveDown,
+  moveLeft,
+  moveRight,
+  moveUp,
+  SIZE,
+  spawnTile
 } from "./utils/gameLogic";
 import {
   handleMove as handleMoveLogic,
@@ -21,6 +22,9 @@ import {
   onTouchEnd as onTouchEndLogic,
 } from "./utils/gameManager";
 
+// NEW: slide-in documentation panel
+import InfoPanel from "./components/InfoPannel";
+
 /** ============================== App ============================== **/
 export default function App() {
   const [board, setBoard]   = useState(() => spawnTile(spawnTile(emptyBoard())));
@@ -29,10 +33,14 @@ export default function App() {
   const [won, setWon]       = useState(false);
   const [over, setOver]     = useState(false);
   const [tick, setTick]     = useState(0); // for CSS nudge
+
   const [companion, setCompanion] = useState(false);
   const [speedMs, setSpeedMs]     = useState(140); // UI cadence
   const [maxDepth, setMaxDepth]   = useState(6);   // AI depth (even numbers only recommended)
   const [timeBudget, setTimeBudget] = useState(55); // ms per move think time
+
+  // NEW: info side-panel toggle
+  const [showInfo, setShowInfo] = useState(false);
 
   const prevRef = useRef({ board: null, score: 0 });
   const touchStart = useRef({ x: 0, y: 0 });
@@ -99,13 +107,11 @@ export default function App() {
   });
 
   const onTouchStart = (e) => onTouchStartLogic(e, { touchStart });
-
-  const onTouchEnd = (e) => onTouchEndLogic(e, { touchStart, handleMove });
+  const onTouchEnd   = (e) => onTouchEndLogic(e, { touchStart, handleMove });
 
   const matrix  = boardToMatrix(board);
   const TILE = 92;     // px
   const GAP  = 8;      // px (gap-2)
-
   const boardPx = SIZE * TILE + (SIZE + 1) * GAP;
 
   return (
@@ -135,9 +141,20 @@ export default function App() {
           </div>
           <div className="text-xs text-slate-400">Dark • Liquid-Glass</div>
         </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <StatCard label="Score" value={score} />
           <StatCard label="Best"  value={best} />
+
+          {/* Info panel toggle */}
+          <button
+            onClick={() => setShowInfo(true)}
+            className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm font-semibold backdrop-blur-md hover:bg-white/15 transition"
+            title="Show documentation"
+          >
+            ℹ️ Info
+          </button>
+
           <button
             onClick={() => setCompanion(v => !v)}
             className={`rounded-xl px-3 py-2 text-sm font-semibold backdrop-blur-md border transition
@@ -151,17 +168,20 @@ export default function App() {
 
           {/* Tweaks for testing */}
           <label className="ml-2 text-xs text-slate-400">Speed</label>
-          <input type="range" min="90" max="300" value={speedMs}
+          <input
+            type="range" min="90" max="300" value={speedMs}
             onChange={(e)=>setSpeedMs(parseInt(e.target.value))}
             className="h-1.5 w-24 accent-cyan-400"
           />
           <label className="ml-2 text-xs text-slate-400">Depth</label>
-          <input type="range" min="4" max="8" step="2" value={maxDepth}
+          <input
+            type="range" min="4" max="8" step="2" value={maxDepth}
             onChange={(e)=>setMaxDepth(parseInt(e.target.value))}
             className="h-1.5 w-20 accent-indigo-400"
           />
           <label className="ml-2 text-xs text-slate-400">Think(ms)</label>
-          <input type="range" min="30" max="90" value={timeBudget}
+          <input
+            type="range" min="30" max="90" value={timeBudget}
             onChange={(e)=>setTimeBudget(parseInt(e.target.value))}
             className="h-1.5 w-24 accent-emerald-400"
           />
@@ -271,6 +291,9 @@ export default function App() {
           <span className="text-slate-500">Undo • 🤖 Expectimax Companion</span>
         </div>
       </main>
+
+      {/* Info side panel (drawer) */}
+      <InfoPanel open={showInfo} onClose={() => setShowInfo(false)} />
     </div>
   );
 }
